@@ -337,7 +337,8 @@ def auth_ui():
                 messagebox.showerror("Error", "Password must be at least 6 characters!")
                 return
             if " " in password:
-                messagebox.showerror('Error", "Password cant contain spaces " "')
+                messagebox.showerror("Error", "Password can't contain spaces")
+                return
             
             user_data = {
                 "action": "signup",

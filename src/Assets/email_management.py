@@ -3,6 +3,8 @@ from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 import random
 import time
+from dotenv import load_dotenv
+load_dotenv()
 
 verification_codes = {}
 
@@ -39,3 +41,21 @@ def send_validation_email(email, is_signup):
     except Exception as e:
         print(f"✗ SendGrid error: {e}")
         return False
+
+def verify_code(email, entered_code):
+    if email not in verification_codes:
+        return False
+    
+    stored_data = verification_codes[email]
+    
+    # Check if code expired (10 minutes = 600 seconds)
+    if time.time() - stored_data["timestamp"] > 600:
+        del verification_codes[email]
+        return False
+    
+    # Check if code matches
+    if stored_data["code"] == entered_code:
+        del verification_codes[email]  # Remove after successful verification
+        return True
+    
+    return False

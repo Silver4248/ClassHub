@@ -5,13 +5,28 @@ import ui_storage
 import os
 import json
 import pyrebase
+from dotenv import load_dotenv
+load_dotenv()
 
+# Load Firebase config from environment variables
 config = {
-    "apiKey": "AIzaSyBz0a6HXlY0Fl27PrNiOa1bEMkzWSb6ZVs",
-    "authDomain": "eduhub-16ced.firebaseapp.com",
-    "databaseURL": "https://eduhub-16ced-default-rtdb.europe-west1.firebasedatabase.app",
-    "storageBucket": "eduhub-16ced.firebasestorage.app"
+    "apiKey": os.environ.get('FIREBASE_API_KEY'),
+    "authDomain": os.environ.get('FIREBASE_AUTH_DOMAIN'),
+    "databaseURL": os.environ.get('FIREBASE_DATABASE_URL'),
+    "storageBucket": os.environ.get('FIREBASE_STORAGE_BUCKET')
 }
+
+# Validate that all required environment variables are set
+required_vars = ['FIREBASE_API_KEY', 'FIREBASE_AUTH_DOMAIN', 'FIREBASE_DATABASE_URL', 'FIREBASE_STORAGE_BUCKET']
+missing_vars = [var for var in required_vars if not os.environ.get(var)]
+
+if missing_vars:
+    messagebox.showerror(
+        "Configuration Error",
+        f"Missing environment variables: {', '.join(missing_vars)}\n\n"
+        "Please set them before running the application."
+    )
+    os._exit(1)
 
 firebase = pyrebase.initialize_app(config)
 auth = firebase.auth()
@@ -24,6 +39,7 @@ with open(os.path.join(os.path.dirname(__file__), "styles.json"), "r") as file:
 def quit_script(msg: str):
     messagebox.showerror("Error", msg)
     os._exit(0)
+
 def reopen_auth(msg: str):
     messagebox.showinfo("Invalid", msg)
     ui_storage.auth_ui()
@@ -46,8 +62,6 @@ if action == "signup":
                     reopen_auth("This email is already registered. Please sign in instead.")
     except Exception as e:
         print(f"Database check error: {e}")
-
-
 
 try:
     result = email_management.send_validation_email(email, action == "signup")
