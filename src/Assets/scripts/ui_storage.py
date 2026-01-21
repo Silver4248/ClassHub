@@ -2,22 +2,17 @@ import tkinter as tk
 from tkinter import messagebox
 import os
 import json
-import sys
 
 styles_data = None
 try:
     with open(os.path.join(os.path.dirname(__file__), "styles.json"), "r") as file:
         styles_data = json.load(file)
 except (FileNotFoundError, ValueError):
-    sys.exit("File styles.json wasn't found, exiting.")
+    messagebox.showerror("File styles.json wasn't found, exiting.")
+    os._exit(0)
 
 
 def auth_ui():
-    """
-    Shows sign in/sign up UI
-    Returns: dict with 'action' (signin/signup), 'email', 'password', 'name' (signup only)
-             or None if cancelled
-    """
     user_data = None
     
     root = tk.Tk()
@@ -163,7 +158,6 @@ def auth_ui():
         )
         signin_btn.pack(padx=50, fill='x', ipady=10, pady=(0, 20))
         
-        # Divider
         divider_frame = tk.Frame(container, bg=styles_data["BG_DARK"])
         divider_frame.pack(fill='x', padx=50, pady=(0, 20))
         
@@ -218,7 +212,7 @@ def auth_ui():
         # Full Name
         name_label = tk.Label(
             container,
-            text="Full Name",
+            text="Nickname",
             bg=styles_data["BG_DARK"],
             fg=styles_data["TEXT_PRIMARY"],
             font=("Segoe UI", 10, "bold"),
@@ -339,6 +333,8 @@ def auth_ui():
             if len(password) < 6:
                 messagebox.showerror("Error", "Password must be at least 6 characters!")
                 return
+            if " " in password:
+                messagebox.showerror('Error", "Password cant contain spaces " "')
             
             user_data = {
                 "action": "signup",
@@ -360,7 +356,7 @@ def auth_ui():
             font=("Segoe UI", 12, "bold"),
             cursor="hand2"
         )
-        signup_btn.pack(padx=50, fill='x', ipady=10, pady=(0, 15))
+        signup_btn.pack(padx=50, fill='x', ipady=10, pady=(0, 0))
         
         # Sign In Link
         signin_text = tk.Label(
