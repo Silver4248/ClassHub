@@ -47,23 +47,25 @@ if action == "signup":
     except Exception as e:
         print(f"Database check error: {e}")
 
-result = email_management.send_validation_email(email, action == "signup")
-if not result:
-    messagebox.showwarning(
-        "Too Many Requests", 
-        "Please wait before requesting another verification code.\n\n"
-        "You can request a new code in 60 seconds."
-    )
-    quit_script("Rate limited. Please try again later.")
 
-entered_code = ui_storage.verification_code_ui()
-if not entered_code:
-    quit_script("Verification cancelled.")
-
-if not email_management.verify_code(email, entered_code):
-    quit_script("Invalid or expired verification code!")
 
 try:
+    result = email_management.send_validation_email(email, action == "signup")
+    if not result:
+        messagebox.showwarning(
+            "Too Many Requests", 
+            "Please wait before requesting another verification code.\n\n"
+            "You can request a new code in 60 seconds."
+        )
+        quit_script("Rate limited. Please try again later.")
+
+    entered_code = ui_storage.verification_code_ui()
+    if not entered_code:
+        quit_script("Verification cancelled.")
+
+    if not email_management.verify_code(email, entered_code):
+        quit_script("Invalid or expired verification code!")
+
     if action == "signup":
         user = auth.create_user_with_email_and_password(email, password)
         user_id = user['localId']
@@ -71,7 +73,8 @@ try:
         db.child("users").child(user_id).set({
             "name": name,
             "email": email,
-            "created_at": str(db.generate_key())  # Timestamp
+            "role": "student",
+            "created_at": str(db.generate_key())
         })
         
         messagebox.showinfo("Success", f"Account created for {name}!")
@@ -83,25 +86,26 @@ try:
         
         messagebox.showinfo("Success", "Signed in successfully!")
         print(f"User signed in: {user_id}")
-        
+
 except Exception as e:
     try:
         error_json = json.loads(e.args[1])
         error_message = error_json["error"]["message"]
 
         if error_message == "EMAIL_EXISTS":
-            reopen_auth("Email already exists. Please sign in instead.")
+            quit_script("Email already exists. Please sign in instead.")
         elif error_message == "INVALID_EMAIL":
-            reopen_auth("Invalid email format.")
+            quit_script("Invalid email format.")
         elif error_message == "WEAK_PASSWORD":
-            reopen_auth("Password should be at least 6 characters.")
+            quit_script("Password should be at least 6 characters.")
         elif error_message == "EMAIL_NOT_FOUND":
-            reopen_auth("No account found with this email. Please sign up first.")
+            quit_script("No account found with this email. Please sign up first.")
         elif error_message == "INVALID_PASSWORD":
-            reopen_auth("Incorrect password. Please try again.")
+            quit_script("Incorrect password. Please try again.")
         else:
-            reopen_auth(f"Firebase error: {error_message}")
+            quit_script(f"Firebase error: {error_message}")
 
     except Exception:
-        reopen_auth(f"Authentication failed: {str(e)}")
+        quit_script(f"Authentication failed: {str(e)}")
 
+main_ui = ui_storage.main_ui()

@@ -2,10 +2,18 @@ import tkinter as tk
 from tkinter import messagebox
 import os
 import json
+import sys
 
 styles_data = None
+def resource_path(relative_path):
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
+
 try:
-    with open(os.path.join(os.path.dirname(__file__), "styles.json"), "r") as file:
+    with open(resource_path("styles.json"), "r") as file:
         styles_data = json.load(file)
 except (FileNotFoundError, ValueError):
     messagebox.showerror("File styles.json wasn't found, exiting.")
@@ -20,13 +28,8 @@ def auth_ui():
     root.geometry("450x600")
     root.resizable(False, False)
     root.configure(bg=styles_data["BG_DARK"])
-    root.attributes('-topmost', True)
 
-    icon_path = os.path.join(
-        os.path.dirname(os.path.dirname(__file__)),
-        "icons",
-        "atlas.png"
-    )
+    icon_path = resource_path(os.path.join("icons", "atlas.png"))
 
     try:
         icon = tk.PhotoImage(file=icon_path)
@@ -397,13 +400,8 @@ def verification_code_ui():
     root.geometry("400x250")
     root.resizable(False, False)
     root.configure(bg=styles_data["BG_DARK"])
-    root.attributes('-topmost', True)
 
-    icon_path = os.path.join(
-        os.path.dirname(os.path.dirname(__file__)),
-        "icons",
-        "atlas.png"
-    )
+    icon_path = resource_path(os.path.join("icons", "atlas.png"))
 
     try:
         icon = tk.PhotoImage(file=icon_path)
@@ -477,3 +475,20 @@ def verification_code_ui():
     root.mainloop()
     
     return code
+
+class main_ui():
+    def __init__(self):
+        self.root = tk.Tk()
+        self.root.title("ClassHub")
+        self.root.resizable(True, True)
+        self.root.configure(bg=styles_data["BG_DARK"])
+        self.root.state("zoomed")
+        self.root.resizable(True, True)
+
+        icon_path = resource_path(os.path.join("icons", "atlas.png"))
+
+        try:
+            icon = tk.PhotoImage(file=icon_path)
+            self.root.iconphoto(True, icon)
+        except:
+            pass
