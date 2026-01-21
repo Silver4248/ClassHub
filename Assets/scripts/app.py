@@ -1,79 +1,63 @@
 import tkinter as tk
 from tkinter import messagebox
 import email_management
+import ui_storage
 import os
+import json
+import sys
+import pyrebase
 
-def validation_ui():
-    root = tk.Tk()
-    root.title("Email Validation")
-    root.geometry("380x220")
-    root.resizable(False, False)
-    root.configure(bg="#1e1e1e")
+config = {
+    "apiKey": "AIzaSyBz0a6HXlY0Fl27PrNiOa1bEMkzWSb6ZVs",
+    "authDomain": "eduhub-16ced.firebaseapp.com",
+    "databaseURL": "https://eduhub-16ced-default-rtdb.europe-west1.firebasedatabase.app",
+    "storageBucket": "eduhub-16ced.firebasestorage.app"
+}
 
-    icon_path = os.path.join(
-        os.path.dirname(os.path.dirname(__file__)),
-        "icons",
-        "atlas.png"
-    )
+firebase = pyrebase.initialize_app(config)
+auth = firebase.auth()
 
-    icon = tk.PhotoImage(file=icon_path)
-    root.iconphoto(True,icon)
+styles_data = None
+with open(os.path.join(os.path.dirname(__file__), "styles.json"), "r") as file:
+    styles_data = json.load(file)
 
-    email_var = tk.StringVar()
+auth_data = ui_storage.auth_ui()
+if not auth_data:
+    sys.exit("Authentication cancelled.")
 
-    title = tk.Label(
-        root,
-        text="ClassHub Email Verification",
-        bg="#1e1e1e",
-        fg="#ffffff",
-        font=("Segoe UI", 14, "bold")
-    )
-    title.pack(pady=(20, 10))
+secret_code = email_management.send_validation_email(auth_data["email"], auth_data["action"] == "signup")
 
-    # ---------- Email Entry ----------
-    email_entry = tk.Entry(
-        root,
-        textvariable=email_var,
-        width=30,
-        bg="#2b2b2b",
-        fg="#ffffff",
-        insertbackground="#ffffff",
-        relief="flat",
-        font=("Segoe UI", 10)
-    )
-    email_entry.pack(pady=10)
-    email_entry.focus()
+if not secret_code:
+    messagebox.showerror("Error", "Failed to send verification email.")
+    sys.exit("Email sending failed.")
 
-    def submit():
-        email = email_var.get().strip()
-        if not email:
-            messagebox.showerror("Error", "Please enter an email.")
-            return
+# Step 3: Show verification code UI
+entered_code = ui_storage.verification_code_ui()
+if not entered_code:
+    sys.exit("Verification cancelled.")
 
-        root.destroy()
-        global user_email
-        user_email = email
-
-    validate_btn = tk.Button(
-        root,
-        text="Send Verification",
-        command=submit,
-        bg="#3a7afe",
-        fg="#ffffff",
-        activebackground="#2f5fd1",
-        activeforeground="#ffffff",
-        relief="flat",
-        font=("Segoe UI", 10, "bold"),
-        padx=10,
-        pady=5
-    )
-    validate_btn.pack(pady=15)
-
-    root.mainloop()
+# Step 4: Verify the code (you need to implement this in email_management)
+if not entered_code == secret_code:
+    sys.exit("Code isn't correct.")
 
 
-user_email = None
-validation_ui()
+# Step 5: Create/Sign in user in Firebase
+try:
+    if auth_data["action"] == "signup":
+        # Create new user
+        user = auth.create_user_with_email_and_password(auth_data["email"], auth_data["password"])
+        messagebox.showinfo("Success", f"Account created for {auth_data['name']}!")
+        print(f"User signed up: {user['localId']}")
+        
+    elif auth_data["action"] == "signin":
+        # Sign in existing user
+        user = auth.sign_in_with_email_and_password(auth_data["email"], auth_data["password"])
+        messagebox.showinfo("Success", "Signed in successfully!")
+        print(f"User signed in: {user['localId']}")
+        
+except Exception as e:
+    messagebox.showerror("Firebase Error", f"Authentication failed: {str(e)}")
+    sys.exit("Firebase auth failed.")
 
-if user_email:
-    result = email_management.send_validation_email(user_email, False)
+# Continue with your app...
+print("Authentication successful! Starting main app...")

@@ -12,10 +12,85 @@ except (FileNotFoundError, ValueError):
     sys.exit("File styles.json wasn't found, exiting.")
 
 
+def validation_ui():
+    user_email = None  # Local variable to store email
+    
+    root = tk.Tk()
+    root.title("Email Validation")
+    root.geometry("380x220")
+    root.resizable(False, False)
+    root.configure(bg=styles_data["BG_DARK"])
+    root.attributes('-topmost', True)  # ← Keeps window on top
+
+    icon_path = os.path.join(
+        os.path.dirname(os.path.dirname(__file__)),
+        "icons",
+        "atlas.png"
+    )
+
+    try:
+        icon = tk.PhotoImage(file=icon_path)
+        root.iconphoto(True, icon)
+    except:
+        pass
+
+    email_var = tk.StringVar()
+
+    title = tk.Label(
+        root,
+        text="ClassHub Email Verification",
+        bg=styles_data["BG_DARK"],
+        fg=styles_data["TEXT_PRIMARY"],
+        font=("Segoe UI", 14, "bold")
+    )
+    title.pack(pady=(20, 10))
+
+    email_entry = tk.Entry(
+        root,
+        textvariable=email_var,
+        width=30,
+        bg=styles_data["BG_MEDIUM"],
+        fg=styles_data["TEXT_PRIMARY"],
+        insertbackground=styles_data["TEXT_PRIMARY"],
+        relief="flat",
+        font=("Segoe UI", 10)
+    )
+    email_entry.pack(pady=10)
+    email_entry.focus()
+
+    def submit():
+        nonlocal user_email  # Access the local variable from outer function
+        email = email_var.get().strip()
+        if not email:
+            messagebox.showerror("Error", "Please enter an email.")
+            return
+
+        user_email = email
+        root.destroy()
+
+    validate_btn = tk.Button(
+        root,
+        text="Send Verification",
+        command=submit,
+        bg=styles_data["ACCENT"],
+        fg=styles_data["TEXT_PRIMARY"],
+        activebackground=styles_data.get("ACCENT_DARK", "#2f5fd1"),
+        activeforeground=styles_data["TEXT_PRIMARY"],
+        relief="flat",
+        font=("Segoe UI", 10, "bold"),
+        padx=10,
+        pady=5
+    )
+    validate_btn.pack(pady=15)
+
+    root.mainloop()
+    
+    return user_email
+
 def auth_ui():
     """
-    Shows sign in/sign up UI
-    Returns: dict with 'action' (signin/signup), 'email', 'password', 'name' (signup only)
+    Shows sign in/sign up UI and returns user data
+    Returns: dict with keys 'action' (signin/signup), 'email', 'password', and 'name' (for signup only)
              or None if cancelled
     """
     user_data = None
@@ -48,6 +123,7 @@ def auth_ui():
     signup_password_var = tk.StringVar()
     signup_confirm_var = tk.StringVar()
 
+    # Main container
     container = tk.Frame(root, bg=styles_data["BG_DARK"])
     container.pack(expand=True, fill='both')
 
@@ -60,6 +136,7 @@ def auth_ui():
         nonlocal user_data
         clear_container()
         
+        # Header
         header = tk.Label(
             container,
             text="🎓 ClassHub",
@@ -129,6 +206,7 @@ def auth_ui():
         )
         password_entry.pack(padx=50, fill='x', ipady=8, pady=(0, 25))
         
+        # Sign In Button
         def handle_signin():
             nonlocal user_data
             email = signin_email_var.get().strip()
@@ -139,9 +217,8 @@ def auth_ui():
                 return
             
             if not email.endswith("@sch.gr"):
-                messagebox.showerror("Error", "Email must end with @sch.gr")
-                return
-            
+                messagebox.showerror("Email must be from school web (@sch.gr)")
+
             user_data = {
                 "action": "signin",
                 "email": email,
@@ -197,6 +274,7 @@ def auth_ui():
         nonlocal user_data
         clear_container()
         
+        # Header
         header = tk.Label(
             container,
             text="🎓 ClassHub",
@@ -317,6 +395,7 @@ def auth_ui():
         )
         confirm_entry.pack(padx=50, fill='x', ipady=8, pady=(0, 20))
         
+        # Sign Up Button
         def handle_signup():
             nonlocal user_data
             name = signup_name_var.get().strip()
@@ -334,10 +413,6 @@ def auth_ui():
             
             if not email.endswith("@sch.gr"):
                 messagebox.showerror("Error", "Email must end with @sch.gr")
-                return
-            
-            if len(password) < 6:
-                messagebox.showerror("Error", "Password must be at least 6 characters!")
                 return
             
             user_data = {
@@ -362,7 +437,6 @@ def auth_ui():
         )
         signup_btn.pack(padx=50, fill='x', ipady=10, pady=(0, 15))
         
-        # Sign In Link
         signin_text = tk.Label(
             container,
             text="Already have an account?",
@@ -384,100 +458,7 @@ def auth_ui():
         signin_link.bind("<Button-1>", lambda e: show_signin())
 
     show_signin()
+    
     root.mainloop()
     
     return user_data
-
-
-def verification_code_ui():
-    """
-    Shows verification code input UI
-    Returns: the entered code or None if cancelled
-    """
-    code = None
-    
-    root = tk.Tk()
-    root.title("Email Verification")
-    root.geometry("400x250")
-    root.resizable(False, False)
-    root.configure(bg=styles_data["BG_DARK"])
-    root.attributes('-topmost', True)
-
-    icon_path = os.path.join(
-        os.path.dirname(os.path.dirname(__file__)),
-        "icons",
-        "atlas.png"
-    )
-
-    try:
-        icon = tk.PhotoImage(file=icon_path)
-        root.iconphoto(True, icon)
-    except:
-        pass
-
-    code_var = tk.StringVar()
-
-    title = tk.Label(
-        root,
-        text="📧 Email Verification",
-        bg=styles_data["BG_DARK"],
-        fg=styles_data["TEXT_PRIMARY"],
-        font=("Segoe UI", 16, "bold")
-    )
-    title.pack(pady=(30, 10))
-
-    subtitle = tk.Label(
-        root,
-        text="Enter the verification code sent to your email",
-        bg=styles_data["BG_DARK"],
-        fg=styles_data["TEXT_SECONDARY"],
-        font=("Segoe UI", 10)
-    )
-    subtitle.pack(pady=(0, 20))
-
-    code_entry = tk.Entry(
-        root,
-        textvariable=code_var,
-        width=20,
-        bg=styles_data["BG_MEDIUM"],
-        fg=styles_data["TEXT_PRIMARY"],
-        insertbackground=styles_data["TEXT_PRIMARY"],
-        relief="flat",
-        font=("Segoe UI", 14, "bold"),
-        justify='center',
-        highlightthickness=1,
-        highlightcolor=styles_data["ACCENT"],
-        highlightbackground="#3a3a3a"
-    )
-    code_entry.pack(pady=10, ipady=10)
-    code_entry.focus()
-
-    def submit():
-        nonlocal code
-        entered_code = code_var.get().strip()
-        if not entered_code:
-            messagebox.showerror("Error", "Please enter the verification code.")
-            return
-
-        code = entered_code
-        root.destroy()
-
-    verify_btn = tk.Button(
-        root,
-        text="Verify Code",
-        command=submit,
-        bg=styles_data["ACCENT"],
-        fg=styles_data["TEXT_PRIMARY"],
-        activebackground=styles_data.get("ACCENT_DARK", "#2f5fd1"),
-        activeforeground=styles_data["TEXT_PRIMARY"],
-        relief="flat",
-        font=("Segoe UI", 11, "bold"),
-        padx=20,
-        pady=10,
-        cursor="hand2"
-    )
-    verify_btn.pack(pady=15)
-
-    root.mainloop()
-    
-    return code
