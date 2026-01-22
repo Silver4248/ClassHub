@@ -26,15 +26,11 @@ if missing_vars:
         f"Missing environment variables: {', '.join(missing_vars)}\n\n"
         "Please set them before running the application."
     )
-    os._exit(1)
+    os._exit(0)
 
 firebase = pyrebase.initialize_app(config)
 auth = firebase.auth()
 db = firebase.database()
-
-styles_data = None
-with open(os.path.join(os.path.dirname(__file__), "styles.json"), "r") as file:
-    styles_data = json.load(file)
 
 def quit_script(msg: str):
     messagebox.showerror("Error", msg)
@@ -53,6 +49,7 @@ password = auth_data["password"]
 action = auth_data["action"]
 name = auth_data.get("name", "")
 
+"""
 if action == "signup":
     try:
         users = db.child("users").get()
@@ -64,7 +61,7 @@ if action == "signup":
         print(f"Database check error: {e}")
 
 try:
-    result = email_management.send_validation_email(email, action == "signup")
+    #result = email_management.send_validation_email(email, action == "signup")
     if not result:
         messagebox.showwarning(
             "Too Many Requests", 
@@ -121,5 +118,7 @@ except Exception as e:
 
     except Exception:
         quit_script(f"Authentication failed: {str(e)}")
+"""
 
 main_ui = ui_storage.main_ui()
+main_ui.root.mainloop()

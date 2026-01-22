@@ -1,6 +1,7 @@
 import os
-from sendgrid import SendGridAPIClient
-from sendgrid.helpers.mail import Mail
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 import random
 import time
 from dotenv import load_dotenv
@@ -18,28 +19,38 @@ def send_validation_email(email, is_signup):
     
     action = "Sign Up" if is_signup else "Sign In"
     
-    message = Mail(
-        from_email='noreply@classhub.app',  # Can be any email
-        to_emails=email,
-        subject=f'ClassHub - {action} Verification Code',
-        html_content=f'''
-        <div style="font-family: Arial, sans-serif; padding: 20px;">
-            <h2>🎓 ClassHub Verification</h2>
-            <p>Your verification code is:</p>
-            <h1 style="color: #3a7afe; letter-spacing: 5px;">{code}</h1>
-            <p>This code expires in 10 minutes.</p>
-            <p style="color: #999; font-size: 12px;">If you didn't request this, ignore this email.</p>
-        </div>
-        '''
-    )
+    # Create message
+    msg = MIMEMultipart('alternative')
+    msg['Subject'] = f'ClassHub - {action} Verification Code'
+    msg['From'] = 'noreply@classhub.app'
+    msg['To'] = email
+    
+    # HTML content
+    html = f'''
+    <div style="font-family: Arial, sans-serif; padding: 20px;">
+        <h2>🎓 ClassHub Verification</h2>
+        <p>Your verification code is:</p>
+        <h1 style="color: #3a7afe; letter-spacing: 5px;">{code}</h1>
+        <p>This code expires in 10 minutes.</p>
+        <p style="color: #999; font-size: 12px;">If you didn't request this, ignore this email.</p>
+    </div>
+    '''
+    
+    # Attach HTML content
+    html_part = MIMEText(html, 'html')
+    msg.attach(html_part)
     
     try:
-        sg = SendGridAPIClient(os.environ.get('SENDGRID_API_KEY'))  # Store in env variable
-        response = sg.send(message)
-        print(f"✓ Email sent! Status: {response.status_code}")
+        # Send via localhost SMTP server
+        s = smtplib.SMTP('smtp.gmail.com', 587)
+        s.starttls()
+        s.login(os.environ.get('EMAIL_USER'), os.environ.get('EMAIL_PASSWORD'))
+        s.send_message(msg)
+        s.quit()
+        print(f"✓ Email sent to {email}")
         return True
     except Exception as e:
-        print(f"✗ SendGrid error: {e}")
+        print(f"✗ SMTP error: {e}")
         return False
 
 def verify_code(email, entered_code):

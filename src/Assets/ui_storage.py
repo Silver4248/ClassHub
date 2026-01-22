@@ -6,15 +6,24 @@ import sys
 
 styles_data = None
 def resource_path(relative_path):
-    try:
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    if hasattr(sys, '_MEIPASS'):
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
         base_path = sys._MEIPASS
-    except Exception:
+    else:
         base_path = os.path.abspath(".")
+    
     return os.path.join(base_path, relative_path)
 
 try:
+    with open(os.path.join(os.path.dirname(__file__), "styles.json"), "r") as file:
+        styles_data = json.load(file)
+    """
+    This for the .exe
+
     with open(resource_path("styles.json"), "r") as file:
         styles_data = json.load(file)
+    """
 except (FileNotFoundError, ValueError):
     messagebox.showerror("File styles.json wasn't found, exiting.")
     os._exit(0)
